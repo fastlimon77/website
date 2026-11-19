@@ -37,7 +37,6 @@
   <!-- HEADER -->
   <header class="sticky top-0 z-40 border-b border-zinc-200 dark:border-zinc-800 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
-      <!-- Brand Logo -->
       <a href="#" onclick="window.scrollTo({top:0,behavior:'smooth'});return false;" class="flex items-center gap-3 shrink-0">
         <div class="w-11 h-11 rounded-full bg-black border border-zinc-800 flex items-center justify-center shadow-sm overflow-hidden">
           <svg viewBox="0 0 100 100" class="w-10 h-10">
@@ -63,14 +62,12 @@
         </div>
       </a>
 
-      <!-- Search (Desktop) -->
       <div class="hidden md:flex flex-1 max-w-md relative">
         <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
         <input id="searchInput" type="text" placeholder="Burger, lavash, pitsa qidirish..."
           class="w-full pl-10 pr-4 py-2 text-sm rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-limon-400" />
       </div>
 
-      <!-- Actions -->
       <div class="flex items-center gap-2">
         <button id="themeToggleBtn" title="Mavzuni o'zgartirish"
           class="p-2.5 rounded-xl border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 transition">
@@ -128,17 +125,13 @@
 
   <!-- MAIN CONTENT -->
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 sm:py-8">
-    <!-- Mobile Search -->
     <div class="md:hidden mb-4 relative">
       <i data-lucide="search" class="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
       <input id="searchInputMobile" type="text" placeholder="Taom qidirish..."
         class="w-full pl-10 pr-4 py-2.5 text-sm rounded-xl bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 focus:outline-none focus:ring-2 focus:ring-limon-400" />
     </div>
 
-    <!-- Categories -->
     <div id="categoryTabs" class="flex items-center gap-2 overflow-x-auto no-scrollbar pb-4"></div>
-
-    <!-- Menu Grid -->
     <div id="menuGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-2"></div>
     <div id="emptyMenuState" class="hidden text-center py-16 text-zinc-500">
       <i data-lucide="utensils-crossed" class="w-10 h-10 mx-auto mb-3 opacity-50"></i>
@@ -191,7 +184,6 @@
         </button>
       </div>
 
-      <!-- Login / Register View -->
       <div id="customerAuthView" class="p-5 space-y-4">
         <p class="text-sm text-zinc-500 dark:text-zinc-400">
           Buyurtmalar tarixini kuzatish va tez buyurtma berish uchun telefon raqamingiz bilan ro'yxatdan o'ting.
@@ -212,7 +204,6 @@
         </button>
       </div>
 
-      <!-- Profile + Order History View -->
       <div id="customerProfileView" class="hidden p-5 space-y-5">
         <div class="p-4 rounded-xl bg-zinc-100 dark:bg-zinc-900 flex items-center justify-between">
           <div>
@@ -289,52 +280,54 @@
               </button>
               <button type="button" id="btnPayCard" onclick="setPaymentMethod('card')"
                 class="p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center gap-2 font-bold text-sm">
-                <i data-lucide="credit-card" class="w-4 h-4"></i> Karta orqali
+                <i data-lucide="credit-card" class="w-4 h-4"></i> Karta / Ilova orqali
               </button>
             </div>
           </div>
 
-          <!-- Karta orqali to'lov tafsilotlari -->
+          <!-- Click, Payme, Uzum yoki Karta raqam -->
           <div id="cardPaymentDetails" class="hidden p-4 rounded-2xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 space-y-4">
             <div>
-              <label class="block text-xs font-semibold mb-2">To'lov tizimini tanlang</label>
+              <label class="block text-xs font-semibold mb-2">Qaysi ilova orqali to'laysiz?</label>
               <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                <button type="button" onclick="selectProvider('Click', this)" class="provider-btn py-2 px-3 rounded-xl border-2 border-limon-400 bg-limon-400/15 text-xs font-bold">Click</button>
-                <button type="button" onclick="selectProvider('Payme', this)" class="provider-btn py-2 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold">Payme</button>
-                <button type="button" onclick="selectProvider('Uzum Bank', this)" class="provider-btn py-2 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold">Uzum Bank</button>
-                <button type="button" onclick="selectProvider('Karta raqam', this)" class="provider-btn py-2 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold">Karta raqam</button>
+                <button type="button" onclick="selectProvider('Click', this)" class="provider-btn py-2.5 px-3 rounded-xl border-2 border-limon-400 bg-limon-400/15 text-xs font-bold">Click</button>
+                <button type="button" onclick="selectProvider('Payme', this)" class="provider-btn py-2.5 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold">Payme</button>
+                <button type="button" onclick="selectProvider('Uzum Bank', this)" class="provider-btn py-2.5 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold">Uzum Bank</button>
+                <button type="button" onclick="selectProvider('Karta raqam', this)" class="provider-btn py-2.5 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold">Karta raqam</button>
               </div>
             </div>
 
-            <!-- Avtomatik to'lov xabari (Click/Payme ulangan bo'lsa) -->
-            <div id="autoPayNotice" class="hidden p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
-              <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
-              <span>Avtomatik to'lov faol! Buyurtmani tasdiqlaganingizda to'g'ridan-to'g'ri to'lov sahifasiga o'tasiz (skrinshot shart emas).</span>
+            <!-- Tanlangan ilovaga to'g'ridan-to'g'ri o'tish tugmasi -->
+            <div id="directPayLinkBox" class="hidden">
+              <a id="directPayAnchor" href="#" target="_blank" rel="noopener noreferrer"
+                class="w-full py-3 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-sm">
+                <i data-lucide="external-link" class="w-4 h-4"></i>
+                <span id="directPayBtnText">Click ilovasida to'lash</span>
+              </a>
             </div>
 
-            <!-- Karta raqam + Skrinshot bloki (Merchant ID kiritilmagan bo'lsa) -->
-            <div id="manualPayBlock" class="space-y-4">
-              <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2">
-                <div>
-                  <div class="text-xs text-zinc-500">To'lov uchun karta raqami (<span id="displayCardHolder">LIMON FAST FOOD</span>)</div>
-                  <div id="displayCardNumber" class="font-mono font-bold text-base mt-0.5 tracking-wider">8600 0609 1234 5678</div>
-                </div>
-                <button type="button" onclick="copyCardNumber()" class="px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-white text-xs font-semibold flex items-center gap-1 hover:opacity-90">
-                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Nusxa
-                </button>
-              </div>
-
+            <!-- Karta raqami + Nusxa olish -->
+            <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2">
               <div>
-                <label class="block text-xs font-semibold mb-1.5">To'lov skrinshotini yuklang *</label>
-                <input id="screenshotInput" type="file" accept="image/*" onchange="previewScreenshot(event)"
-                  class="w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-limon-400 file:text-zinc-950 file:font-bold hover:file:bg-limon-500 cursor-pointer" />
-                <img id="screenshotPreview" class="hidden mt-3 max-h-44 rounded-xl border border-zinc-300 dark:border-zinc-700 object-contain" />
+                <div class="text-xs text-zinc-500">To'lov uchun karta raqami (<span id="displayCardHolder">LIMON FAST FOOD</span>)</div>
+                <div id="displayCardNumber" class="font-mono font-bold text-base mt-0.5 tracking-wider">8600 0609 1234 5678</div>
               </div>
+              <button type="button" onclick="copyCardNumber()" class="px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-white text-xs font-semibold flex items-center gap-1 hover:opacity-90 shrink-0">
+                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Nusxa
+              </button>
+            </div>
+
+            <!-- Skrinshot yuklash -->
+            <div>
+              <label class="block text-xs font-semibold mb-1.5">To'lov qilinganidan so'ng skrinshotni yuklang *</label>
+              <input id="screenshotInput" type="file" accept="image/*" onchange="previewScreenshot(event)"
+                class="w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-limon-400 file:text-zinc-950 file:font-bold hover:file:bg-limon-500 cursor-pointer" />
+              <img id="screenshotPreview" class="hidden mt-3 max-h-44 rounded-xl border border-zinc-300 dark:border-zinc-700 object-contain" />
             </div>
           </div>
         </div>
 
-        <!-- 4. Manzil kiritish (Yetkazib berishda) -->
+        <!-- 4. Manzil kiritish -->
         <div id="addressSection" class="space-y-3">
           <div class="flex items-center justify-between">
             <label class="text-xs font-semibold">Yetkazib berish manzili *</label>
@@ -395,7 +388,6 @@
         </button>
       </div>
 
-      <!-- Admin PIN Login -->
       <div id="adminLoginView" class="p-8 max-w-sm mx-auto text-center space-y-4">
         <div class="w-12 h-12 rounded-2xl bg-limon-400/15 text-limon-500 flex items-center justify-center mx-auto">
           <i data-lucide="lock" class="w-6 h-6"></i>
@@ -412,7 +404,6 @@
         </button>
       </div>
 
-      <!-- Admin Dashboard -->
       <div id="adminDashboardView" class="hidden p-5 space-y-5">
         <div class="flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
           <button onclick="switchAdminTab('products')" id="tabBtnProducts" class="px-4 py-2 rounded-xl text-xs font-bold bg-limon-400 text-zinc-950">Mahsulotlar</button>
@@ -472,7 +463,7 @@
               <input id="setTgChatId" type="text" placeholder="-1001234567890 yoki 123456789" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
             </div>
             <div>
-              <label class="block text-xs font-semibold mb-1">To'lov karta raqami</label>
+              <label class="block text-xs font-semibold mb-1">To'lov karta raqami (Humo / Uzcard)</label>
               <input id="setCardNumber" type="text" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
             </div>
             <div>
@@ -480,16 +471,16 @@
               <input id="setCardHolder" type="text" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm" />
             </div>
             <div>
-              <label class="block text-xs font-semibold mb-1">Click Merchant ID (Avtomatik to'lov)</label>
-              <input id="setClickMerchantId" type="text" placeholder="Merchant ID" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
+              <label class="block text-xs font-semibold mb-1">Click to'lov havolasi (ixtiyoriy)</label>
+              <input id="setClickLink" type="url" placeholder="https://my.click.uz/services/pay/..." class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
             </div>
             <div>
-              <label class="block text-xs font-semibold mb-1">Click Service ID (Avtomatik to'lov)</label>
-              <input id="setClickServiceId" type="text" placeholder="Service ID" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
+              <label class="block text-xs font-semibold mb-1">Payme to'lov havolasi (ixtiyoriy)</label>
+              <input id="setPaymeLink" type="url" placeholder="https://payme.uz/@..." class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
             </div>
             <div>
-              <label class="block text-xs font-semibold mb-1">Payme Merchant ID (Avtomatik to'lov)</label>
-              <input id="setPaymeMerchantId" type="text" placeholder="Payme Merchant ID" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
+              <label class="block text-xs font-semibold mb-1">Uzum Bank havolasi (ixtiyoriy)</label>
+              <input id="setUzumLink" type="url" placeholder="https://..." class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
             </div>
             <div>
               <label class="block text-xs font-semibold mb-1">Yetkazib berish narxi (so'm)</label>
@@ -527,9 +518,9 @@
       deliveryFee: 12000,
       cardNumber: '8600 0609 1234 5678',
       cardHolder: 'LIMON FAST FOOD',
-      clickMerchantId: '',
-      clickServiceId: '',
-      paymeMerchantId: ''
+      clickPayLink: '',
+      paymePayLink: '',
+      uzumPayLink: ''
     };
     let activeCategory = 'Barchasi';
     let searchQuery = '';
@@ -564,17 +555,33 @@
       return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
     }
 
-    function isAutoPaymentActive() {
-      if (paymentMethod !== 'card') return false;
-      if (paymentProvider === 'Click' && publicConfig.clickMerchantId && publicConfig.clickServiceId) return true;
-      if (paymentProvider === 'Payme' && publicConfig.paymeMerchantId) return true;
-      return false;
-    }
+    function updateDirectPayButton() {
+      const box = document.getElementById('directPayLinkBox');
+      const anchor = document.getElementById('directPayAnchor');
+      const label = document.getElementById('directPayBtnText');
 
-    function updateCardPaymentUI() {
-      const autoActive = isAutoPaymentActive();
-      document.getElementById('autoPayNotice').classList.toggle('hidden', !autoActive);
-      document.getElementById('manualPayBlock').classList.toggle('hidden', autoActive);
+      let link = '';
+      if (paymentProvider === 'Click' && publicConfig.clickPayLink) {
+        link = publicConfig.clickPayLink;
+        label.textContent = "Click ilovasida to'lashga o'tish";
+        anchor.className = "w-full py-3 px-4 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-sm";
+      } else if (paymentProvider === 'Payme' && publicConfig.paymePayLink) {
+        link = publicConfig.paymePayLink;
+        label.textContent = "Payme ilovasida to'lashga o'tish";
+        anchor.className = "w-full py-3 px-4 rounded-xl bg-teal-500 hover:bg-teal-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-sm";
+      } else if (paymentProvider === 'Uzum Bank' && publicConfig.uzumPayLink) {
+        link = publicConfig.uzumPayLink;
+        label.textContent = "Uzum Bank ilovasida to'lashga o'tish";
+        anchor.className = "w-full py-3 px-4 rounded-xl bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-sm";
+      }
+
+      if (link) {
+        anchor.href = link;
+        box.classList.remove('hidden');
+      } else {
+        box.classList.add('hidden');
+      }
+      lucide.createIcons();
     }
 
     // ==================== INIT ====================
@@ -610,7 +617,7 @@
         document.getElementById('heroDeliveryFee').textContent = formatPrice(publicConfig.deliveryFee);
         document.getElementById('displayCardNumber').textContent = publicConfig.cardNumber;
         document.getElementById('displayCardHolder').textContent = publicConfig.cardHolder;
-        updateCardPaymentUI();
+        updateDirectPayButton();
       } catch (e) {}
     }
 
@@ -827,7 +834,7 @@
             <span class="font-black text-sm">Buyurtma #${o.orderNumber}</span>
             <span class="px-2.5 py-0.5 rounded-full font-bold bg-limon-400/20 text-limon-500">${o.status}</span>
           </div>
-          <div class="text-zinc-500">${new Date(o.createdAt).toLocaleString('uz-UZ')} • ${o.deliveryType === 'delivery' ? 'Yetkazib berish' : 'Soboy'} • ${o.paymentStatus || ''}</div>
+          <div class="text-zinc-500">${new Date(o.createdAt).toLocaleString('uz-UZ')} • ${o.deliveryType === 'delivery' ? 'Yetkazib berish' : 'Soboy'} • ${o.paymentMethod === 'cash' ? 'Naqd pul' : o.paymentProvider}</div>
           <div class="space-y-0.5">${o.items.map(i => `<div>${i.name} × ${i.qty}</div>`).join('')}</div>
           <div class="font-bold text-sm pt-1 border-t border-zinc-200 dark:border-zinc-800">Jami: ${formatPrice(o.total)}</div>
         </div>
@@ -844,7 +851,7 @@
         document.getElementById('chkPhone').value = '+998 ';
       }
       updateCheckoutTotals();
-      updateCardPaymentUI();
+      updateDirectPayButton();
       openModal('checkoutModal');
     }
 
@@ -876,17 +883,17 @@
         kBtn.className = "p-3 rounded-xl border-2 border-limon-400 bg-limon-400/10 flex items-center justify-center gap-2 font-bold text-sm";
         cBtn.className = "p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center gap-2 font-bold text-sm";
         document.getElementById('cardPaymentDetails').classList.remove('hidden');
-        updateCardPaymentUI();
+        updateDirectPayButton();
       }
     }
 
     function selectProvider(provider, btn) {
       paymentProvider = provider;
       document.querySelectorAll('.provider-btn').forEach(b => {
-        b.className = "provider-btn py-2 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold";
+        b.className = "provider-btn py-2.5 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold";
       });
-      btn.className = "provider-btn py-2 px-3 rounded-xl border-2 border-limon-400 bg-limon-400/15 text-xs font-bold";
-      updateCardPaymentUI();
+      btn.className = "provider-btn py-2.5 px-3 rounded-xl border-2 border-limon-400 bg-limon-400/15 text-xs font-bold";
+      updateDirectPayButton();
     }
 
     function copyCardNumber() {
@@ -923,13 +930,11 @@
       if (!mapInstance) {
         mapInstance = L.map('leafletMap').setView([RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng], 15);
 
-        // Bloklanmaydigan xarita (CartoDB Voyager)
         L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
           maxZoom: 19,
           attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(mapInstance);
 
-        // LIMON FAST FOOD filial belgisi
         const shopIcon = L.divIcon({
           html: `<div style="background:#000;color:#FACC15;border:2px solid #FACC15;border-radius:999px;padding:4px 8px;font-weight:900;font-size:11px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.4)">LIMON FAST FOOD</div>`,
           className: '',
@@ -1004,8 +1009,8 @@
       if (deliveryType === 'delivery' && !addressText && !selectedLocation) {
         return showToast("Yetkazib berish manzilini kiriting yoki xaritadan tanlang");
       }
-      if (paymentMethod === 'card' && !isAutoPaymentActive() && !screenshotFile) {
-        return showToast("Karta orqali to'lov skrinshotini yuklang");
+      if (paymentMethod === 'card' && !screenshotFile) {
+        return showToast("To'lov cheki skrinshotini yuklang");
       }
 
       const btn = document.getElementById('submitOrderBtn');
@@ -1045,13 +1050,6 @@
         document.getElementById('screenshotInput').value = '';
         document.getElementById('screenshotPreview').classList.add('hidden');
         closeModal('checkoutModal');
-
-        if (data.paymentUrl) {
-          showToast(`${paymentProvider} to'lov sahifasiga o'tilmoqda...`);
-          setTimeout(() => { window.location.href = data.paymentUrl; }, 800);
-          return;
-        }
-
         showToast(`Buyurtma #${data.order.orderNumber} muvaffaqiyatli qabul qilindi!`);
       } catch (err) {
         showToast(err.message);
@@ -1197,7 +1195,7 @@
           </div>
           <div class="text-zinc-500">
             ${o.deliveryType === 'delivery' ? 'Yetkazib berish' : 'Soboy'} •
-            ${o.paymentMethod === 'cash' ? 'Naqd pul' : `Karta (${o.paymentProvider}) — ${o.paymentStatus || ''}`} •
+            ${o.paymentMethod === 'cash' ? 'Naqd pul' : `Karta/Ilova (${o.paymentProvider})`} •
             ${o.addressText}
             ${o.location ? `<a href="https://maps.google.com/?q=${o.location.lat},${o.location.lng}" target="_blank" class="text-limon-500 underline ml-1">Xaritada ochish</a>` : ''}
           </div>
@@ -1225,9 +1223,9 @@
       document.getElementById('setTgChatId').value = s.telegramChatId || '';
       document.getElementById('setCardNumber').value = s.cardNumber || '';
       document.getElementById('setCardHolder').value = s.cardHolder || '';
-      document.getElementById('setClickMerchantId').value = s.clickMerchantId || '';
-      document.getElementById('setClickServiceId').value = s.clickServiceId || '';
-      document.getElementById('setPaymeMerchantId').value = s.paymeMerchantId || '';
+      document.getElementById('setClickLink').value = s.clickPayLink || '';
+      document.getElementById('setPaymeLink').value = s.paymePayLink || '';
+      document.getElementById('setUzumLink').value = s.uzumPayLink || '';
       document.getElementById('setDeliveryFee').value = s.deliveryFee ?? 12000;
     }
 
@@ -1237,9 +1235,9 @@
         telegramChatId: document.getElementById('setTgChatId').value.trim(),
         cardNumber: document.getElementById('setCardNumber').value.trim(),
         cardHolder: document.getElementById('setCardHolder').value.trim(),
-        clickMerchantId: document.getElementById('setClickMerchantId').value.trim(),
-        clickServiceId: document.getElementById('setClickServiceId').value.trim(),
-        paymeMerchantId: document.getElementById('setPaymeMerchantId').value.trim(),
+        clickPayLink: document.getElementById('setClickLink').value.trim(),
+        paymePayLink: document.getElementById('setPaymeLink').value.trim(),
+        uzumPayLink: document.getElementById('setUzumLink').value.trim(),
         deliveryFee: Number(document.getElementById('setDeliveryFee').value),
         adminPin: document.getElementById('setAdminPin').value.trim()
       };

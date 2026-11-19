@@ -17,7 +17,7 @@ const DB_FILE = path.join(DATA_DIR, 'db.json');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
-// Security & Middleware (Xarita bloklanmasligi uchun referrerPolicy qo'shilgan)
+// Security & Middleware
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
@@ -71,11 +71,11 @@ const defaultSettings = {
   deliveryFee: 12000,
   cardNumber: "8600 0609 1234 5678",
   cardHolder: "LIMON FAST FOOD",
+  clickPayLink: "",
+  paymePayLink: "",
+  uzumPayLink: "",
   telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || "",
-  telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
-  clickMerchantId: process.env.CLICK_MERCHANT_ID || "",
-  clickServiceId: process.env.CLICK_SERVICE_ID || "",
-  paymeMerchantId: process.env.PAYME_MERCHANT_ID || ""
+  telegramChatId: process.env.TELEGRAM_CHAT_ID || ""
 };
 
 function loadDB() {
@@ -105,7 +105,6 @@ function saveDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
-// Admin PIN tekshirish
 function requireAdmin(req, res, next) {
   const db = loadDB();
   const pin = req.headers['x-admin-pin'];
@@ -113,30 +112,6 @@ function requireAdmin(req, res, next) {
     return res.status(401).json({ error: "Admin PIN kodi noto'g'ri" });
   }
   next();
-}
-
-// Avtomatik to'lov havolasini yaratish (Click / Payme)
-function buildAutoPaymentUrl(order, settings, origin) {
-  if (order.paymentMethod !== 'card') return null;
-
-  if (order.paymentProvider === 'Click' && settings.clickMerchantId && settings.clickServiceId) {
-    const params = new URLSearchParams({
-      service_id: settings.clickServiceId,
-      merchant_id: settings.clickMerchantId,
-      amount: String(order.total),
-      transaction_param: String(order.orderNumber),
-      return_url: origin || ''
-    });
-    return `https://my.click.uz/services/pay?${params.toString()}`;
-  }
-
-  if (order.paymentProvider === 'Payme' && settings.paymeMerchantId) {
-    const raw = `m=${settings.paymeMerchantId};ac.order_id=${order.orderNumber};a=${order.total * 100}`;
-    const b64 = Buffer.from(raw).toString('base64');
-    return `https://checkout.paycom.uz/${b64}`;
-  }
-
-  return null;
 }
 
 // Telegramga buyurtma yuborish
@@ -154,7 +129,7 @@ async function sendOrderToTelegram(order, settings) {
   const deliveryLabel = order.deliveryType === 'delivery' ? 'Yetkazib berish' : 'Olib ketish (Soboy)';
   const paymentLabel = order.paymentMethod === 'cash'
     ? 'Naqd pul'
-    : `Karta orqali (${order.paymentProvider || 'Karta'}) — ${order.paymentStatus}`;
+    : `Karta / Ilova orqali (${order.paymentProvider || 'Karta'})`;
 
   let addressBlock = 'Filialdan olib ketish';
   if (order.deliveryType === 'delivery') {
@@ -212,7 +187,7 @@ async function sendOrderToTelegram(order, settings) {
       const blob = new Blob([fileBuffer]);
       const formData = new FormData();
       formData.append('chat_id', chatId);
-      formData.append('caption', `Buyurtma #${order.orderNumber} to'lov cheki (${order.customerPhone})`);
+      formData.append('caption', `Buyurtma #${order.orderNumber} to'lov cheki (${order.paymentProvider} • ${order.customerPhone})`);
       formData.append('photo', blob, path.basename(order.paymentScreenshotPath));
 
       await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
@@ -237,9 +212,9 @@ app.get('/api/public-config', (req, res) => {
     deliveryFee: db.settings.deliveryFee ?? 12000,
     cardNumber: db.settings.cardNumber || "8600 0609 1234 5678",
     cardHolder: db.settings.cardHolder || "LIMON FAST FOOD",
-    clickMerchantId: db.settings.clickMerchantId || "",
-    clickServiceId: db.settings.clickServiceId || "",
-    paymeMerchantId: db.settings.paymeMerchantId || ""
+    clickPayLink: db.settings.clickPayLink || "",
+    paymePayLink: db.settings.paymePayLink || "",
+    uzumPayLink: db.settings.uzumPayLink || ""
   });
 });
 
@@ -268,13 +243,12 @@ app.get('/api/geocode', async (req, res) => {
   }
 });
 
-// Menyu olish
+// Menyu
 app.get('/api/menu', (req, res) => {
   const db = loadDB();
   res.json(db.menu);
 });
 
-// Admin: Mahsulot qo'shish
 app.post('/api/menu', requireAdmin, upload.single('imageFile'), (req, res) => {
   const db = loadDB();
   const { name, category, price, desc, imageUrl } = req.body;
@@ -296,7 +270,6 @@ app.post('/api/menu', requireAdmin, upload.single('imageFile'), (req, res) => {
   res.status(201).json(newItem);
 });
 
-// Admin: Mahsulotni tahrirlash
 app.put('/api/menu/:id', requireAdmin, upload.single('imageFile'), (req, res) => {
   const db = loadDB();
   const id = Number(req.params.id);
@@ -321,7 +294,6 @@ app.put('/api/menu/:id', requireAdmin, upload.single('imageFile'), (req, res) =>
   res.json(db.menu[idx]);
 });
 
-// Admin: Mahsulotni o'chirish
 app.delete('/api/menu/:id', requireAdmin, (req, res) => {
   const db = loadDB();
   const id = Number(req.params.id);
@@ -332,7 +304,7 @@ app.delete('/api/menu/:id', requireAdmin, (req, res) => {
   res.json({ deleted: true, id });
 });
 
-// Mijoz: Ro'yxatdan o'tish / kirish
+// Mijoz
 app.post('/api/auth/customer', (req, res) => {
   const db = loadDB();
   const { name, phone } = req.body;
@@ -357,7 +329,6 @@ app.post('/api/auth/customer', (req, res) => {
   res.json(customer);
 });
 
-// Mijoz: Buyurtmalar tarixi
 app.get('/api/orders/customer', (req, res) => {
   const db = loadDB();
   const cleanPhone = String(req.query.phone || '').replace(/[^\d+]/g, '');
@@ -368,7 +339,7 @@ app.get('/api/orders/customer', (req, res) => {
   res.json(list);
 });
 
-// Buyurtma yaratish + Avtomatik to'lov havolasi + Telegram
+// Buyurtma yaratish
 app.post('/api/orders', upload.single('screenshot'), async (req, res) => {
   try {
     const db = loadDB();
@@ -412,7 +383,6 @@ app.post('/api/orders', upload.single('screenshot'), async (req, res) => {
       deliveryType: deliveryType === 'pickup' ? 'pickup' : 'delivery',
       paymentMethod: paymentMethod === 'card' ? 'card' : 'cash',
       paymentProvider: paymentMethod === 'card' ? (paymentProvider || 'Karta') : null,
-      paymentStatus: paymentMethod === 'cash' ? 'Naqd (yetkazilganda)' : (screenshotUrl ? 'Chek yuklangan' : "Avtomatik to'lov kutilmoqda"),
       paymentScreenshot: screenshotUrl,
       addressText: deliveryType === 'delivery' ? String(addressText || '').trim() : 'Olib ketish (Soboy)',
       location: parsedLocation,
@@ -425,69 +395,18 @@ app.post('/api/orders', upload.single('screenshot'), async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
-    const origin = req.headers.origin || `https://${req.headers.host}`;
-    const paymentUrl = buildAutoPaymentUrl(order, db.settings, origin);
-
     db.orders.unshift(order);
     saveDB(db);
 
     const tgResult = await sendOrderToTelegram({ ...order, paymentScreenshotPath: screenshotPath }, db.settings);
-    res.status(201).json({ order, telegram: tgResult, paymentUrl });
+    res.status(201).json({ order, telegram: tgResult });
   } catch (err) {
     console.error("Buyurtma yaratishda xatolik:", err);
     res.status(500).json({ error: "Buyurtmani saqlashda xatolik yuz berdi" });
   }
 });
 
-// Click Webhook: Prepare & Complete (Avtomatik tasdiqlash)
-app.post('/api/payments/click/prepare', (req, res) => {
-  const { click_trans_id, merchant_trans_id } = req.body;
-  const db = loadDB();
-  const order = db.orders.find(o => String(o.orderNumber) === String(merchant_trans_id));
-  if (!order) return res.json({ error: -5, error_note: "Order not found" });
-  res.json({
-    click_trans_id,
-    merchant_trans_id,
-    merchant_prepare_id: order.id,
-    error: 0,
-    error_note: "Success"
-  });
-});
-
-app.post('/api/payments/click/complete', async (req, res) => {
-  const { click_trans_id, merchant_trans_id, error } = req.body;
-  const db = loadDB();
-  const order = db.orders.find(o => String(o.orderNumber) === String(merchant_trans_id));
-  if (!order) return res.json({ error: -5, error_note: "Order not found" });
-
-  if (Number(error) === 0) {
-    order.paymentStatus = "To'landi (Click)";
-    order.status = "Tayyorlanmoqda";
-    saveDB(db);
-    const token = db.settings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = db.settings.telegramChatId || process.env.TELEGRAM_CHAT_ID;
-    if (token && chatId) {
-      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: `<b>TO'LOV TASDIQLANDI</b>\nBuyurtma #${order.orderNumber} Click orqali avtomatik to'landi (${order.total.toLocaleString('uz-UZ')} so'm).`,
-          parse_mode: 'HTML'
-        })
-      }).catch(() => {});
-    }
-  }
-  res.json({
-    click_trans_id,
-    merchant_trans_id,
-    merchant_confirm_id: order.id,
-    error: 0,
-    error_note: "Success"
-  });
-});
-
-// Admin: PIN tekshirish
+// Admin
 app.post('/api/admin/verify', (req, res) => {
   const db = loadDB();
   const { pin } = req.body;
@@ -497,13 +416,11 @@ app.post('/api/admin/verify', (req, res) => {
   res.status(401).json({ error: "PIN kod noto'g'ri" });
 });
 
-// Admin: Barcha buyurtmalar
 app.get('/api/admin/orders', requireAdmin, (req, res) => {
   const db = loadDB();
   res.json(db.orders);
 });
 
-// Admin: Buyurtma holatini o'zgartirish
 app.patch('/api/admin/orders/:id/status', requireAdmin, (req, res) => {
   const db = loadDB();
   const id = Number(req.params.id);
@@ -515,7 +432,6 @@ app.patch('/api/admin/orders/:id/status', requireAdmin, (req, res) => {
   res.json(order);
 });
 
-// Admin: Sozlamalarni olish va saqlash
 app.get('/api/admin/settings', requireAdmin, (req, res) => {
   const db = loadDB();
   res.json(db.settings);
@@ -525,22 +441,21 @@ app.put('/api/admin/settings', requireAdmin, (req, res) => {
   const db = loadDB();
   const {
     deliveryFee, cardNumber, cardHolder, telegramBotToken, telegramChatId, adminPin,
-    clickMerchantId, clickServiceId, paymeMerchantId
+    clickPayLink, paymePayLink, uzumPayLink
   } = req.body;
   if (deliveryFee !== undefined) db.settings.deliveryFee = Number(deliveryFee);
   if (cardNumber !== undefined) db.settings.cardNumber = String(cardNumber).trim();
   if (cardHolder !== undefined) db.settings.cardHolder = String(cardHolder).trim();
+  if (clickPayLink !== undefined) db.settings.clickPayLink = String(clickPayLink).trim();
+  if (paymePayLink !== undefined) db.settings.paymePayLink = String(paymePayLink).trim();
+  if (uzumPayLink !== undefined) db.settings.uzumPayLink = String(uzumPayLink).trim();
   if (telegramBotToken !== undefined) db.settings.telegramBotToken = String(telegramBotToken).trim();
   if (telegramChatId !== undefined) db.settings.telegramChatId = String(telegramChatId).trim();
-  if (clickMerchantId !== undefined) db.settings.clickMerchantId = String(clickMerchantId).trim();
-  if (clickServiceId !== undefined) db.settings.clickServiceId = String(clickServiceId).trim();
-  if (paymeMerchantId !== undefined) db.settings.paymeMerchantId = String(paymeMerchantId).trim();
   if (adminPin && String(adminPin).trim().length >= 4) db.settings.adminPin = String(adminPin).trim();
   saveDB(db);
   res.json(db.settings);
 });
 
-// Admin: Telegram ulanishini tekshirish
 app.post('/api/admin/test-telegram', requireAdmin, async (req, res) => {
   const db = loadDB();
   const token = req.body.telegramBotToken || db.settings.telegramBotToken;
