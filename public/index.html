@@ -29,7 +29,7 @@
     body { font-family: 'Inter', sans-serif; }
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-    #leafletMap { height: 260px; width: 100%; border-radius: 0.75rem; z-index: 10; }
+    #leafletMap { height: 280px; width: 100%; border-radius: 0.75rem; z-index: 10; }
   </style>
 </head>
 <body class="bg-zinc-50 text-zinc-950 dark:bg-zinc-950 dark:text-zinc-50 transition-colors duration-200 min-h-screen flex flex-col">
@@ -306,21 +306,30 @@
               </div>
             </div>
 
-            <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2">
-              <div>
-                <div class="text-xs text-zinc-500">To'lov uchun karta raqami (<span id="displayCardHolder">LIMON FAST FOOD</span>)</div>
-                <div id="displayCardNumber" class="font-mono font-bold text-base mt-0.5 tracking-wider">8600 0609 1234 5678</div>
-              </div>
-              <button type="button" onclick="copyCardNumber()" class="px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-white text-xs font-semibold flex items-center gap-1 hover:opacity-90">
-                <i data-lucide="copy" class="w-3.5 h-3.5"></i> Nusxa
-              </button>
+            <!-- Avtomatik to'lov xabari (Click/Payme ulangan bo'lsa) -->
+            <div id="autoPayNotice" class="hidden p-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 text-xs font-semibold flex items-center gap-2">
+              <i data-lucide="check-circle-2" class="w-4 h-4 shrink-0"></i>
+              <span>Avtomatik to'lov faol! Buyurtmani tasdiqlaganingizda to'g'ridan-to'g'ri to'lov sahifasiga o'tasiz (skrinshot shart emas).</span>
             </div>
 
-            <div>
-              <label class="block text-xs font-semibold mb-1.5">To'lov skrinshotini yuklang *</label>
-              <input id="screenshotInput" type="file" accept="image/*" onchange="previewScreenshot(event)"
-                class="w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-limon-400 file:text-zinc-950 file:font-bold hover:file:bg-limon-500 cursor-pointer" />
-              <img id="screenshotPreview" class="hidden mt-3 max-h-44 rounded-xl border border-zinc-300 dark:border-zinc-700 object-contain" />
+            <!-- Karta raqam + Skrinshot bloki (Merchant ID kiritilmagan bo'lsa) -->
+            <div id="manualPayBlock" class="space-y-4">
+              <div class="p-3.5 rounded-xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 flex items-center justify-between gap-2">
+                <div>
+                  <div class="text-xs text-zinc-500">To'lov uchun karta raqami (<span id="displayCardHolder">LIMON FAST FOOD</span>)</div>
+                  <div id="displayCardNumber" class="font-mono font-bold text-base mt-0.5 tracking-wider">8600 0609 1234 5678</div>
+                </div>
+                <button type="button" onclick="copyCardNumber()" class="px-3 py-1.5 rounded-lg bg-zinc-900 dark:bg-zinc-800 text-white text-xs font-semibold flex items-center gap-1 hover:opacity-90">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Nusxa
+                </button>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold mb-1.5">To'lov skrinshotini yuklang *</label>
+                <input id="screenshotInput" type="file" accept="image/*" onchange="previewScreenshot(event)"
+                  class="w-full text-xs file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-limon-400 file:text-zinc-950 file:font-bold hover:file:bg-limon-500 cursor-pointer" />
+                <img id="screenshotPreview" class="hidden mt-3 max-h-44 rounded-xl border border-zinc-300 dark:border-zinc-700 object-contain" />
+              </div>
             </div>
           </div>
         </div>
@@ -335,18 +344,18 @@
             </div>
           </div>
 
-          <input id="addressTextInput" type="text" placeholder="Ko'cha, uy, mo'ljal (masalan: Amir Temur ko'chasi 14-uy)"
+          <input id="addressTextInput" type="text" placeholder="Ko'cha, uy, mo'ljal (xaritadan tanlasangiz avtomatik to'ldiriladi)"
             class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm focus:ring-2 focus:ring-limon-400 focus:outline-none" />
 
           <div id="mapContainer" class="hidden space-y-2">
             <div class="flex items-center justify-between text-xs text-zinc-500">
-              <span>Xaritadan manzilingizni bosing:</span>
+              <span>Xaritadan manzilingizni bosing yoki markerni suring:</span>
               <button type="button" onclick="locateMe()" class="text-limon-500 font-semibold flex items-center gap-1 hover:underline">
                 <i data-lucide="crosshair" class="w-3.5 h-3.5"></i> Mening joylashuvim
               </button>
             </div>
             <div id="leafletMap"></div>
-            <div id="selectedCoordsLabel" class="text-xs text-zinc-500 font-mono"></div>
+            <div id="selectedCoordsLabel" class="text-xs text-zinc-500 font-medium"></div>
           </div>
         </div>
 
@@ -408,7 +417,7 @@
         <div class="flex flex-wrap gap-2 border-b border-zinc-200 dark:border-zinc-800 pb-3">
           <button onclick="switchAdminTab('products')" id="tabBtnProducts" class="px-4 py-2 rounded-xl text-xs font-bold bg-limon-400 text-zinc-950">Mahsulotlar</button>
           <button onclick="switchAdminTab('orders')" id="tabBtnOrders" class="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-zinc-900">Buyurtmalar</button>
-          <button onclick="switchAdminTab('settings')" id="tabBtnSettings" class="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-zinc-900">Telegram & Sozlamalar</button>
+          <button onclick="switchAdminTab('settings')" id="tabBtnSettings" class="px-4 py-2 rounded-xl text-xs font-bold bg-zinc-100 dark:bg-zinc-900">Telegram & To'lov</button>
         </div>
 
         <!-- TAB 1: PRODUCTS -->
@@ -471,10 +480,22 @@
               <input id="setCardHolder" type="text" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm" />
             </div>
             <div>
+              <label class="block text-xs font-semibold mb-1">Click Merchant ID (Avtomatik to'lov)</label>
+              <input id="setClickMerchantId" type="text" placeholder="Merchant ID" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">Click Service ID (Avtomatik to'lov)</label>
+              <input id="setClickServiceId" type="text" placeholder="Service ID" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1">Payme Merchant ID (Avtomatik to'lov)</label>
+              <input id="setPaymeMerchantId" type="text" placeholder="Payme Merchant ID" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
+            </div>
+            <div>
               <label class="block text-xs font-semibold mb-1">Yetkazib berish narxi (so'm)</label>
               <input id="setDeliveryFee" type="number" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm" />
             </div>
-            <div>
+            <div class="sm:col-span-2">
               <label class="block text-xs font-semibold mb-1">Yangi Admin PIN (kamida 4 belgi)</label>
               <input id="setAdminPin" type="text" placeholder="O'zgartirmaslik uchun bo'sh qoldiring" class="w-full px-3.5 py-2.5 rounded-xl bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 text-sm font-mono" />
             </div>
@@ -497,10 +518,19 @@
 
   <script>
     // ==================== STATE ====================
+    const RESTAURANT_COORDS = { lat: 40.590365, lng: 72.487483 };
+
     let menu = [];
     let cart = JSON.parse(localStorage.getItem('limon_cart') || '[]');
     let customer = JSON.parse(localStorage.getItem('limon_customer') || 'null');
-    let publicConfig = { deliveryFee: 12000, cardNumber: '8600 0609 1234 5678', cardHolder: 'LIMON FAST FOOD' };
+    let publicConfig = {
+      deliveryFee: 12000,
+      cardNumber: '8600 0609 1234 5678',
+      cardHolder: 'LIMON FAST FOOD',
+      clickMerchantId: '',
+      clickServiceId: '',
+      paymeMerchantId: ''
+    };
     let activeCategory = 'Barchasi';
     let searchQuery = '';
     let adminPin = sessionStorage.getItem('limon_admin_pin') || '';
@@ -522,6 +552,29 @@
       t.classList.remove('hidden');
       clearTimeout(window._toastTimer);
       window._toastTimer = setTimeout(() => t.classList.add('hidden'), 3200);
+    }
+
+    function calcDistanceKm(lat1, lon1, lat2, lon2) {
+      const R = 6371;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a = Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      return (R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))).toFixed(1);
+    }
+
+    function isAutoPaymentActive() {
+      if (paymentMethod !== 'card') return false;
+      if (paymentProvider === 'Click' && publicConfig.clickMerchantId && publicConfig.clickServiceId) return true;
+      if (paymentProvider === 'Payme' && publicConfig.paymeMerchantId) return true;
+      return false;
+    }
+
+    function updateCardPaymentUI() {
+      const autoActive = isAutoPaymentActive();
+      document.getElementById('autoPayNotice').classList.toggle('hidden', !autoActive);
+      document.getElementById('manualPayBlock').classList.toggle('hidden', autoActive);
     }
 
     // ==================== INIT ====================
@@ -557,6 +610,7 @@
         document.getElementById('heroDeliveryFee').textContent = formatPrice(publicConfig.deliveryFee);
         document.getElementById('displayCardNumber').textContent = publicConfig.cardNumber;
         document.getElementById('displayCardHolder').textContent = publicConfig.cardHolder;
+        updateCardPaymentUI();
       } catch (e) {}
     }
 
@@ -773,7 +827,7 @@
             <span class="font-black text-sm">Buyurtma #${o.orderNumber}</span>
             <span class="px-2.5 py-0.5 rounded-full font-bold bg-limon-400/20 text-limon-500">${o.status}</span>
           </div>
-          <div class="text-zinc-500">${new Date(o.createdAt).toLocaleString('uz-UZ')} • ${o.deliveryType === 'delivery' ? 'Yetkazib berish' : 'Soboy'}</div>
+          <div class="text-zinc-500">${new Date(o.createdAt).toLocaleString('uz-UZ')} • ${o.deliveryType === 'delivery' ? 'Yetkazib berish' : 'Soboy'} • ${o.paymentStatus || ''}</div>
           <div class="space-y-0.5">${o.items.map(i => `<div>${i.name} × ${i.qty}</div>`).join('')}</div>
           <div class="font-bold text-sm pt-1 border-t border-zinc-200 dark:border-zinc-800">Jami: ${formatPrice(o.total)}</div>
         </div>
@@ -790,6 +844,7 @@
         document.getElementById('chkPhone').value = '+998 ';
       }
       updateCheckoutTotals();
+      updateCardPaymentUI();
       openModal('checkoutModal');
     }
 
@@ -821,6 +876,7 @@
         kBtn.className = "p-3 rounded-xl border-2 border-limon-400 bg-limon-400/10 flex items-center justify-center gap-2 font-bold text-sm";
         cBtn.className = "p-3 rounded-xl border border-zinc-200 dark:border-zinc-800 flex items-center justify-center gap-2 font-bold text-sm";
         document.getElementById('cardPaymentDetails').classList.remove('hidden');
+        updateCardPaymentUI();
       }
     }
 
@@ -830,6 +886,7 @@
         b.className = "provider-btn py-2 px-3 rounded-xl border border-zinc-300 dark:border-zinc-700 text-xs font-bold";
       });
       btn.className = "provider-btn py-2 px-3 rounded-xl border-2 border-limon-400 bg-limon-400/15 text-xs font-bold";
+      updateCardPaymentUI();
     }
 
     function copyCardNumber() {
@@ -864,31 +921,65 @@
 
     function initLeafletMap() {
       if (!mapInstance) {
-        mapInstance = L.map('leafletMap').setView([41.2995, 69.2401], 12);
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap'
+        mapInstance = L.map('leafletMap').setView([RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng], 15);
+
+        // Bloklanmaydigan xarita (CartoDB Voyager)
+        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+          maxZoom: 19,
+          attribution: '&copy; OpenStreetMap &copy; CARTO'
         }).addTo(mapInstance);
+
+        // LIMON FAST FOOD filial belgisi
+        const shopIcon = L.divIcon({
+          html: `<div style="background:#000;color:#FACC15;border:2px solid #FACC15;border-radius:999px;padding:4px 8px;font-weight:900;font-size:11px;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.4)">LIMON FAST FOOD</div>`,
+          className: '',
+          iconSize: [120, 26],
+          iconAnchor: [60, 13]
+        });
+        L.marker([RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng], { icon: shopIcon })
+          .addTo(mapInstance)
+          .bindPopup('<b>LIMON FAST FOOD</b><br>Asosiy filial');
+
         mapInstance.on('click', (e) => setMapPoint(e.latlng.lat, e.latlng.lng));
       }
       setTimeout(() => mapInstance.invalidateSize(), 200);
     }
 
-    function setMapPoint(lat, lng) {
+    async function setMapPoint(lat, lng) {
       selectedLocation = { lat: Number(lat.toFixed(6)), lng: Number(lng.toFixed(6)) };
-      if (mapMarker) mapMarker.setLatLng([lat, lng]);
-      else mapMarker = L.marker([lat, lng]).addTo(mapInstance);
-      mapInstance.setView([lat, lng], 15);
-      document.getElementById('selectedCoordsLabel').textContent = `Tanlangan koordinata: ${selectedLocation.lat}, ${selectedLocation.lng}`;
-      if (!document.getElementById('addressTextInput').value.trim()) {
+      if (mapMarker) {
+        mapMarker.setLatLng([lat, lng]);
+      } else {
+        mapMarker = L.marker([lat, lng], { draggable: true }).addTo(mapInstance);
+        mapMarker.on('dragend', () => {
+          const pos = mapMarker.getLatLng();
+          setMapPoint(pos.lat, pos.lng);
+        });
+      }
+      mapInstance.setView([lat, lng], 16);
+
+      const dist = calcDistanceKm(RESTAURANT_COORDS.lat, RESTAURANT_COORDS.lng, lat, lng);
+      document.getElementById('selectedCoordsLabel').textContent =
+        `Manzil aniqlanmoqda... (${selectedLocation.lat}, ${selectedLocation.lng} • Filialdan ~${dist} km)`;
+
+      try {
+        const res = await fetch(`/api/geocode?lat=${selectedLocation.lat}&lng=${selectedLocation.lng}`);
+        const data = await res.json();
+        const exactAddr = data.address || `${selectedLocation.lat}, ${selectedLocation.lng}`;
+        document.getElementById('addressTextInput').value = exactAddr;
+        document.getElementById('selectedCoordsLabel').textContent = `${exactAddr} (Filialdan ~${dist} km)`;
+      } catch (e) {
         document.getElementById('addressTextInput').value = `Xarita nuqtasi (${selectedLocation.lat}, ${selectedLocation.lng})`;
       }
     }
 
     function locateMe() {
       if (!navigator.geolocation) return showToast("Brauzer geolokatsiyani qo'llab-quvvatlamaydi");
+      showToast("Aniq joylashuvingiz aniqlanmoqda...");
       navigator.geolocation.getCurrentPosition(
         (pos) => setMapPoint(pos.coords.latitude, pos.coords.longitude),
-        () => showToast("Joylashuvni aniqlab bo'lmadi")
+        () => showToast("Joylashuvga ruxsat berilmadi. Xaritadan qo'lda belgilang."),
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
       );
     }
 
@@ -913,7 +1004,7 @@
       if (deliveryType === 'delivery' && !addressText && !selectedLocation) {
         return showToast("Yetkazib berish manzilini kiriting yoki xaritadan tanlang");
       }
-      if (paymentMethod === 'card' && !screenshotFile) {
+      if (paymentMethod === 'card' && !isAutoPaymentActive() && !screenshotFile) {
         return showToast("Karta orqali to'lov skrinshotini yuklang");
       }
 
@@ -922,7 +1013,6 @@
       btn.textContent = "Yuborilmoqda...";
 
       try {
-        // Mijozni avtomatik saqlash
         const authRes = await fetch('/api/auth/customer', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -955,6 +1045,13 @@
         document.getElementById('screenshotInput').value = '';
         document.getElementById('screenshotPreview').classList.add('hidden');
         closeModal('checkoutModal');
+
+        if (data.paymentUrl) {
+          showToast(`${paymentProvider} to'lov sahifasiga o'tilmoqda...`);
+          setTimeout(() => { window.location.href = data.paymentUrl; }, 800);
+          return;
+        }
+
         showToast(`Buyurtma #${data.order.orderNumber} muvaffaqiyatli qabul qilindi!`);
       } catch (err) {
         showToast(err.message);
@@ -1100,7 +1197,7 @@
           </div>
           <div class="text-zinc-500">
             ${o.deliveryType === 'delivery' ? 'Yetkazib berish' : 'Soboy'} •
-            ${o.paymentMethod === 'cash' ? 'Naqd pul' : `Karta (${o.paymentProvider})`} •
+            ${o.paymentMethod === 'cash' ? 'Naqd pul' : `Karta (${o.paymentProvider}) — ${o.paymentStatus || ''}`} •
             ${o.addressText}
             ${o.location ? `<a href="https://maps.google.com/?q=${o.location.lat},${o.location.lng}" target="_blank" class="text-limon-500 underline ml-1">Xaritada ochish</a>` : ''}
           </div>
@@ -1128,6 +1225,9 @@
       document.getElementById('setTgChatId').value = s.telegramChatId || '';
       document.getElementById('setCardNumber').value = s.cardNumber || '';
       document.getElementById('setCardHolder').value = s.cardHolder || '';
+      document.getElementById('setClickMerchantId').value = s.clickMerchantId || '';
+      document.getElementById('setClickServiceId').value = s.clickServiceId || '';
+      document.getElementById('setPaymeMerchantId').value = s.paymeMerchantId || '';
       document.getElementById('setDeliveryFee').value = s.deliveryFee ?? 12000;
     }
 
@@ -1137,6 +1237,9 @@
         telegramChatId: document.getElementById('setTgChatId').value.trim(),
         cardNumber: document.getElementById('setCardNumber').value.trim(),
         cardHolder: document.getElementById('setCardHolder').value.trim(),
+        clickMerchantId: document.getElementById('setClickMerchantId').value.trim(),
+        clickServiceId: document.getElementById('setClickServiceId').value.trim(),
+        paymeMerchantId: document.getElementById('setPaymeMerchantId').value.trim(),
         deliveryFee: Number(document.getElementById('setDeliveryFee').value),
         adminPin: document.getElementById('setAdminPin').value.trim()
       };

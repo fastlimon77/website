@@ -17,7 +17,7 @@ const DB_FILE = path.join(DATA_DIR, 'db.json');
 if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
-// Security & Middleware
+// Security & Middleware (Xarita bloklanmasligi uchun referrerPolicy qo'shilgan)
 app.use(helmet({
   contentSecurityPolicy: false,
   crossOriginEmbedderPolicy: false,
@@ -50,7 +50,7 @@ const upload = multer({
   }
 });
 
-// Standart ma'lumotlar bazasi
+// Standart menyu
 const defaultMenu = [
   { id: 1, name: "Limon Signature Burger", category: "Burgerlar", price: 36000, desc: "Yumshoq bulochka, 100% mol go'shti kotleti, cheddar pishloqi va maxsus limonli sous.", image: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=600&q=80" },
   { id: 2, name: "Double Cheese Burger", category: "Burgerlar", price: 45000, desc: "Ikki qavatli shirador mol go'shti, qo'shaloq cheddar, tuzlangan bodring va sous.", image: "https://images.unsplash.com/photo-1550547660-d9450f859349?auto=format&fit=crop&w=600&q=80" },
@@ -66,28 +66,28 @@ const defaultMenu = [
   { id: 12, name: "Coca-Cola (0.5L)", category: "Ichimliklar", price: 10000, desc: "Muzdek klassik Coca-Cola ichimligi.", image: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?auto=format&fit=crop&w=600&q=80" }
 ];
 
+const defaultSettings = {
+  adminPin: process.env.ADMIN_PIN || "1234",
+  deliveryFee: 12000,
+  cardNumber: "8600 0609 1234 5678",
+  cardHolder: "LIMON FAST FOOD",
+  telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || "",
+  telegramChatId: process.env.TELEGRAM_CHAT_ID || "",
+  clickMerchantId: process.env.CLICK_MERCHANT_ID || "",
+  clickServiceId: process.env.CLICK_SERVICE_ID || "",
+  paymeMerchantId: process.env.PAYME_MERCHANT_ID || ""
+};
+
 function loadDB() {
   if (!fs.existsSync(DB_FILE)) {
-    const initial = {
-      menu: defaultMenu,
-      customers: [],
-      orders: [],
-      settings: {
-        adminPin: process.env.ADMIN_PIN || "1234",
-        deliveryFee: 12000,
-        cardNumber: "8600 0609 1234 5678",
-        cardHolder: "LIMON FAST FOOD",
-        telegramBotToken: process.env.TELEGRAM_BOT_TOKEN || "",
-        telegramChatId: process.env.TELEGRAM_CHAT_ID || ""
-      }
-    };
+    const initial = { menu: defaultMenu, customers: [], orders: [], settings: { ...defaultSettings } };
     fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf-8');
     return initial;
   }
   try {
     const raw = fs.readFileSync(DB_FILE, 'utf-8');
     const data = JSON.parse(raw);
-    if (!data.settings) data.settings = {};
+    data.settings = { ...defaultSettings, ...(data.settings || {}) };
     if (process.env.TELEGRAM_BOT_TOKEN && !data.settings.telegramBotToken) {
       data.settings.telegramBotToken = process.env.TELEGRAM_BOT_TOKEN;
     }
@@ -97,7 +97,7 @@ function loadDB() {
     return data;
   } catch (err) {
     console.error("DB o'qishda xatolik:", err);
-    return { menu: defaultMenu, customers: [], orders: [], settings: { adminPin: "1234", deliveryFee: 12000, cardNumber: "8600 0609 1234 5678", cardHolder: "LIMON FAST FOOD", telegramBotToken: "", telegramChatId: "" } };
+    return { menu: defaultMenu, customers: [], orders: [], settings: { ...defaultSettings } };
   }
 }
 
@@ -105,7 +105,7 @@ function saveDB(data) {
   fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
 }
 
-// Admin PIN tekshirish middleware
+// Admin PIN tekshirish
 function requireAdmin(req, res, next) {
   const db = loadDB();
   const pin = req.headers['x-admin-pin'];
@@ -115,7 +115,31 @@ function requireAdmin(req, res, next) {
   next();
 }
 
-// Telegramga buyurtma yuborish (matn + rasm skrinshot)
+// Avtomatik to'lov havolasini yaratish (Click / Payme)
+function buildAutoPaymentUrl(order, settings, origin) {
+  if (order.paymentMethod !== 'card') return null;
+
+  if (order.paymentProvider === 'Click' && settings.clickMerchantId && settings.clickServiceId) {
+    const params = new URLSearchParams({
+      service_id: settings.clickServiceId,
+      merchant_id: settings.clickMerchantId,
+      amount: String(order.total),
+      transaction_param: String(order.orderNumber),
+      return_url: origin || ''
+    });
+    return `https://my.click.uz/services/pay?${params.toString()}`;
+  }
+
+  if (order.paymentProvider === 'Payme' && settings.paymeMerchantId) {
+    const raw = `m=${settings.paymeMerchantId};ac.order_id=${order.orderNumber};a=${order.total * 100}`;
+    const b64 = Buffer.from(raw).toString('base64');
+    return `https://checkout.paycom.uz/${b64}`;
+  }
+
+  return null;
+}
+
+// Telegramga buyurtma yuborish
 async function sendOrderToTelegram(order, settings) {
   const token = settings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
   const chatId = settings.telegramChatId || process.env.TELEGRAM_CHAT_ID;
@@ -130,7 +154,7 @@ async function sendOrderToTelegram(order, settings) {
   const deliveryLabel = order.deliveryType === 'delivery' ? 'Yetkazib berish' : 'Olib ketish (Soboy)';
   const paymentLabel = order.paymentMethod === 'cash'
     ? 'Naqd pul'
-    : `Karta orqali (${order.paymentProvider || 'Karta'})`;
+    : `Karta orqali (${order.paymentProvider || 'Karta'}) — ${order.paymentStatus}`;
 
   let addressBlock = 'Filialdan olib ketish';
   if (order.deliveryType === 'delivery') {
@@ -159,7 +183,6 @@ async function sendOrderToTelegram(order, settings) {
   ].filter(Boolean).join('\n');
 
   try {
-    // 1. Asosiy matnni yuborish
     const msgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -172,7 +195,6 @@ async function sendOrderToTelegram(order, settings) {
     });
     const msgData = await msgRes.json();
 
-    // 2. Agar xarita koordinatasi bo'lsa, Telegram Location yuborish
     if (order.deliveryType === 'delivery' && order.location && order.location.lat && order.location.lng) {
       await fetch(`https://api.telegram.org/bot${token}/sendLocation`, {
         method: 'POST',
@@ -185,7 +207,6 @@ async function sendOrderToTelegram(order, settings) {
       }).catch(() => {});
     }
 
-    // 3. Agar to'lov skrinshoti yuklangan bo'lsa, sendPhoto orqali yuborish
     if (order.paymentScreenshotPath && fs.existsSync(order.paymentScreenshotPath)) {
       const fileBuffer = fs.readFileSync(order.paymentScreenshotPath);
       const blob = new Blob([fileBuffer]);
@@ -209,14 +230,42 @@ async function sendOrderToTelegram(order, settings) {
 
 // ==================== API ROUTES ====================
 
-// Ommaviy sozlamalar (tokendan tashqari)
+// Ommaviy sozlamalar
 app.get('/api/public-config', (req, res) => {
   const db = loadDB();
   res.json({
     deliveryFee: db.settings.deliveryFee ?? 12000,
     cardNumber: db.settings.cardNumber || "8600 0609 1234 5678",
-    cardHolder: db.settings.cardHolder || "LIMON FAST FOOD"
+    cardHolder: db.settings.cardHolder || "LIMON FAST FOOD",
+    clickMerchantId: db.settings.clickMerchantId || "",
+    clickServiceId: db.settings.clickServiceId || "",
+    paymeMerchantId: db.settings.paymeMerchantId || ""
   });
+});
+
+// Koordinatadan aniq manzilni aniqlash (Reverse Geocoding)
+app.get('/api/geocode', async (req, res) => {
+  const { lat, lng } = req.query;
+  if (!lat || !lng) return res.status(400).json({ error: "Koordinata kerak" });
+  try {
+    const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${encodeURIComponent(lat)}&lon=${encodeURIComponent(lng)}&accept-language=uz`;
+    const r = await fetch(url, {
+      headers: { 'User-Agent': 'LimonFastFoodApp/1.0 (contact@limonfastfood.uz)' }
+    });
+    const data = await r.json();
+    const addr = data.address || {};
+    const parts = [
+      addr.city || addr.town || addr.village || addr.county,
+      addr.neighbourhood || addr.suburb || addr.quarter,
+      addr.road || addr.street,
+      addr.house_number ? `${addr.house_number}-uy` : null
+    ].filter(Boolean);
+    res.json({
+      address: parts.length ? parts.join(', ') : (data.display_name || `${lat}, ${lng}`)
+    });
+  } catch (err) {
+    res.json({ address: `${lat}, ${lng}` });
+  }
 });
 
 // Menyu olish
@@ -225,7 +274,7 @@ app.get('/api/menu', (req, res) => {
   res.json(db.menu);
 });
 
-// Admin: Mahsulot qo'shish (fayl yoki rasm URL bilan)
+// Admin: Mahsulot qo'shish
 app.post('/api/menu', requireAdmin, upload.single('imageFile'), (req, res) => {
   const db = loadDB();
   const { name, category, price, desc, imageUrl } = req.body;
@@ -247,7 +296,7 @@ app.post('/api/menu', requireAdmin, upload.single('imageFile'), (req, res) => {
   res.status(201).json(newItem);
 });
 
-// Admin: Mahsulotni tahrirlash (narx, nom, rasm)
+// Admin: Mahsulotni tahrirlash
 app.put('/api/menu/:id', requireAdmin, upload.single('imageFile'), (req, res) => {
   const db = loadDB();
   const id = Number(req.params.id);
@@ -283,7 +332,7 @@ app.delete('/api/menu/:id', requireAdmin, (req, res) => {
   res.json({ deleted: true, id });
 });
 
-// Mijoz: Telefon raqam orqali ro'yxatdan o'tish / kirish
+// Mijoz: Ro'yxatdan o'tish / kirish
 app.post('/api/auth/customer', (req, res) => {
   const db = loadDB();
   const { name, phone } = req.body;
@@ -308,7 +357,7 @@ app.post('/api/auth/customer', (req, res) => {
   res.json(customer);
 });
 
-// Mijoz: Shaxsiy buyurtmalar tarixi
+// Mijoz: Buyurtmalar tarixi
 app.get('/api/orders/customer', (req, res) => {
   const db = loadDB();
   const cleanPhone = String(req.query.phone || '').replace(/[^\d+]/g, '');
@@ -319,7 +368,7 @@ app.get('/api/orders/customer', (req, res) => {
   res.json(list);
 });
 
-// Buyurtma yaratish + skrinshot yuklash + Telegramga yuborish
+// Buyurtma yaratish + Avtomatik to'lov havolasi + Telegram
 app.post('/api/orders', upload.single('screenshot'), async (req, res) => {
   try {
     const db = loadDB();
@@ -363,6 +412,7 @@ app.post('/api/orders', upload.single('screenshot'), async (req, res) => {
       deliveryType: deliveryType === 'pickup' ? 'pickup' : 'delivery',
       paymentMethod: paymentMethod === 'card' ? 'card' : 'cash',
       paymentProvider: paymentMethod === 'card' ? (paymentProvider || 'Karta') : null,
+      paymentStatus: paymentMethod === 'cash' ? 'Naqd (yetkazilganda)' : (screenshotUrl ? 'Chek yuklangan' : "Avtomatik to'lov kutilmoqda"),
       paymentScreenshot: screenshotUrl,
       addressText: deliveryType === 'delivery' ? String(addressText || '').trim() : 'Olib ketish (Soboy)',
       location: parsedLocation,
@@ -375,15 +425,66 @@ app.post('/api/orders', upload.single('screenshot'), async (req, res) => {
       createdAt: new Date().toISOString()
     };
 
+    const origin = req.headers.origin || `https://${req.headers.host}`;
+    const paymentUrl = buildAutoPaymentUrl(order, db.settings, origin);
+
     db.orders.unshift(order);
     saveDB(db);
 
     const tgResult = await sendOrderToTelegram({ ...order, paymentScreenshotPath: screenshotPath }, db.settings);
-    res.status(201).json({ order, telegram: tgResult });
+    res.status(201).json({ order, telegram: tgResult, paymentUrl });
   } catch (err) {
     console.error("Buyurtma yaratishda xatolik:", err);
     res.status(500).json({ error: "Buyurtmani saqlashda xatolik yuz berdi" });
   }
+});
+
+// Click Webhook: Prepare & Complete (Avtomatik tasdiqlash)
+app.post('/api/payments/click/prepare', (req, res) => {
+  const { click_trans_id, merchant_trans_id } = req.body;
+  const db = loadDB();
+  const order = db.orders.find(o => String(o.orderNumber) === String(merchant_trans_id));
+  if (!order) return res.json({ error: -5, error_note: "Order not found" });
+  res.json({
+    click_trans_id,
+    merchant_trans_id,
+    merchant_prepare_id: order.id,
+    error: 0,
+    error_note: "Success"
+  });
+});
+
+app.post('/api/payments/click/complete', async (req, res) => {
+  const { click_trans_id, merchant_trans_id, error } = req.body;
+  const db = loadDB();
+  const order = db.orders.find(o => String(o.orderNumber) === String(merchant_trans_id));
+  if (!order) return res.json({ error: -5, error_note: "Order not found" });
+
+  if (Number(error) === 0) {
+    order.paymentStatus = "To'landi (Click)";
+    order.status = "Tayyorlanmoqda";
+    saveDB(db);
+    const token = db.settings.telegramBotToken || process.env.TELEGRAM_BOT_TOKEN;
+    const chatId = db.settings.telegramChatId || process.env.TELEGRAM_CHAT_ID;
+    if (token && chatId) {
+      fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: chatId,
+          text: `<b>TO'LOV TASDIQLANDI</b>\nBuyurtma #${order.orderNumber} Click orqali avtomatik to'landi (${order.total.toLocaleString('uz-UZ')} so'm).`,
+          parse_mode: 'HTML'
+        })
+      }).catch(() => {});
+    }
+  }
+  res.json({
+    click_trans_id,
+    merchant_trans_id,
+    merchant_confirm_id: order.id,
+    error: 0,
+    error_note: "Success"
+  });
 });
 
 // Admin: PIN tekshirish
@@ -422,12 +523,18 @@ app.get('/api/admin/settings', requireAdmin, (req, res) => {
 
 app.put('/api/admin/settings', requireAdmin, (req, res) => {
   const db = loadDB();
-  const { deliveryFee, cardNumber, cardHolder, telegramBotToken, telegramChatId, adminPin } = req.body;
+  const {
+    deliveryFee, cardNumber, cardHolder, telegramBotToken, telegramChatId, adminPin,
+    clickMerchantId, clickServiceId, paymeMerchantId
+  } = req.body;
   if (deliveryFee !== undefined) db.settings.deliveryFee = Number(deliveryFee);
   if (cardNumber !== undefined) db.settings.cardNumber = String(cardNumber).trim();
   if (cardHolder !== undefined) db.settings.cardHolder = String(cardHolder).trim();
   if (telegramBotToken !== undefined) db.settings.telegramBotToken = String(telegramBotToken).trim();
   if (telegramChatId !== undefined) db.settings.telegramChatId = String(telegramChatId).trim();
+  if (clickMerchantId !== undefined) db.settings.clickMerchantId = String(clickMerchantId).trim();
+  if (clickServiceId !== undefined) db.settings.clickServiceId = String(clickServiceId).trim();
+  if (paymeMerchantId !== undefined) db.settings.paymeMerchantId = String(paymeMerchantId).trim();
   if (adminPin && String(adminPin).trim().length >= 4) db.settings.adminPin = String(adminPin).trim();
   saveDB(db);
   res.json(db.settings);
